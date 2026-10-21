@@ -1,9 +1,30 @@
 {
-  "name": "@local/dsh-mermaid",
+  "name": "dsh-mermaid",
   "version": "0.1.0",
-  "private": true,
   "type": "module",
-  "description": "A right-Sidebar page that renders a conversation's Mermaid diagrams.",
+  "description": "Mermaid diagrams in the DeepSeek Harness right sidebar: renders a conversation's diagrams with in-card zoom and pan.",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "dsh-bundle",
+    "mermaid",
+    "diagram",
+    "sidebar"
+  ],
+  "author": "Natsubrei",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Natsubrei/dsh-mermaid.git"
+  },
+  "homepage": "https://github.com/Natsubrei/dsh-mermaid#readme",
+  "bugs": {
+    "url": "https://github.com/Natsubrei/dsh-mermaid/issues"
+  },
+  "engines": {
+    "dsh": "*"
+  },
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
@@ -17,7 +38,8 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "dsh": {
     "bundle": {
@@ -34,7 +56,8 @@
     }
   },
   "scripts": {
-    "build": "node build.mjs"
+    "build": "node build.mjs",
+    "market": "node scripts/market-index.mjs"
   },
   "devDependencies": {
     "esbuild": "0.25.12",
