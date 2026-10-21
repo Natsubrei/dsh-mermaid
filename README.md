@@ -1,0 +1,71 @@
+# dsh-mermaid
+
+A DeepSeek Harness client plugin that adds a **Mermaid** page to the right Sidebar. It renders the Mermaid diagrams in the conversation you are reading, without touching the conversation itself.
+
+## What it does
+
+- Registers one right-Sidebar page type (`mermaid`) and a guide capsule, so the empty Sidebar offers it as a door.
+- Scans the rendered conversation for code blocks whose first line declares a Mermaid diagram, and renders them in the page's own React tree.
+- Each card keeps the authored source one click away, plus copy.
+- Each diagram zooms and pans in place; a full-screen view is one button away.
+- Re-renders when the palette changes; the Sidebar's own docking, splitting, and per-Session tab persistence apply unchanged.
+
+The chat's code block is never hidden or replaced. Copying the source from the transcript, quoting it, or letting the model read it back still works, and a change to the chat's DOM costs the page its input rather than the transcript.
+
+## What it deliberately does not do
+
+- It does not modify DeepSeek Harness. Everything it uses is a declared public extension point: `ctx.sidebarRightTabs`, `sidebar.right.pane.tab`, and the `ctx.locale` / `ctx.slots` services.
+- It does not render inline in the transcript. Replacing a chat code block in place would need a rendering seam that the product does not have, so the diagram lives in the Sidebar instead.
+
+## How it finds diagrams
+
+The chat renders an unknown language as a plain code card with no language attribute, so the page reads the first declaration line and accepts:
+
+- `graph` / `flowchart` followed by a direction (`TB`, `TD`, `BT`, `RL`, `LR`);
+- a known diagram keyword such as `sequenceDiagram`, `classDiagram`, `stateDiagram`, `erDiagram`, `gantt`, `pie`, `journey`, `gitGraph`, `mindmap`, `timeline`, `xychart-beta`, `quadrantChart`, and the rest;
+- leading blank lines, `%%` comments, and a YAML front-matter block.
+
+Mermaid's own parser is the final word: a source that fails to render shows the failure notice and its source instead of a diagram.
+
+## Zooming
+
+Every card is its own viewport, so a diagram can be examined without leaving the Sidebar.
+
+- The wheel zooms around the pointer; `−`, `+`, and the percentage sit in the card's lower-right corner, on hover or while zoomed.
+- Dragging pans, bounded to the diagram so it cannot be dragged out of its frame. Double-clicking, or **Fit**, returns it to the fitted size.
+- The scale never goes below the fitted size: the card's ordinary rendering is the floor.
+
+The card's **Enlarge** button opens the same diagram full screen, where the wheel, the buttons, `+` / `-`, `Esc`, and `Fit` all work over the whole window. A click on the diagram itself is a pan, not a way into that view.
+
+Both views are portals or plain transforms inside the page: the full-screen one mounts on `document.body` so the Sidebar's scroll container cannot clip it, and neither keeps state once the card is gone.
+
+## Install
+
+```sh
+cd dsh-mermaid
+node build.mjs
+```
+
+Then install the package directory as a bundle in the Harness profile, for example through the plugin manager's `install_bundle` action. The bundle patch inserts the entry into the profile's `cordis.yml`.
+
+## Layout
+
+| File | Role |
+| --- | --- |
+| `index.js` | Host half. Rendering is browser-only, so it contributes nothing. |
+| `src/client.jsx` | The page type, its body, and the scan. Built into `client.js`. |
+| `client.mermaid.js` | The Mermaid engine as a lazy loader chunk, requested on the first diagram. |
+| `cordis.patch.yml` | Inserts the plugin into the profile. |
+| `locale/en.json`, `locale/zh.json` | Plugin-inventory title and description. |
+
+## How to reach it
+
+The page type contributes one guide capsule, the same door `ui-sidebar-terminal` uses. Open the right Sidebar and pick **Mermaid** on the guide page. If the Sidebar has exactly one door registered — ours, when no other type offers a guide capsule — the Sidebar seeds that page as its first tab instead of the guide; that seeding rule belongs to the Sidebar, not to this plugin.
+
+## Limits
+
+- The page reads the DOM of the conversation that is on screen. If the chat's code-card markup changes, the page shows its empty state until the selectors are updated.
+- Sources are read from what the chat has mounted, so history the chat has not rendered yet (virtualized or collapsed) is not included.
+- An open page observes the document to notice a remounted conversation, so a streaming turn costs one debounced scan every ~240 ms.
+- The engine is a 3.5 MB chunk, downloaded once per page load on first diagram.
+- The full-screen view holds the SVG it opened with; a diagram that changes while the view is open updates in place, and its zoom stays where it was.

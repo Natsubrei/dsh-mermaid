@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Mermaid 图表",
+    "description": "在右侧栏新增一页，把当前对话里的 Mermaid 图表渲染出来。"
+  }
+}
