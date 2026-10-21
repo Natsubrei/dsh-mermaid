@@ -1,0 +1,58 @@
+{
+  "format": 1,
+  "title": {
+    "en": "Natsubrei’s DSH plugins",
+    "zh": "Natsubrei 的 DSH 插件"
+  },
+  "description": {
+    "en": "Plugin market published from github.com/Natsubrei.",
+    "zh": "由 github.com/Natsubrei 发布的插件市场。"
+  },
+  "plugins": [
+    {
+      "name": "dsh-mermaid",
+      "title": {
+        "en": "Mermaid diagrams",
+        "zh": "Mermaid 图表"
+      },
+      "description": {
+        "en": "A right-Sidebar page that renders a conversation’s Mermaid diagrams, with zoom and pan in every card.",
+        "zh": "在右侧栏渲染当前对话中的 Mermaid 图表，每张图都能在卡片内缩放与拖动。"
+      },
+      "icon": "icon.svg",
+      "author": "Natsubrei",
+      "homepage": "https://github.com/Natsubrei/dsh-mermaid#readme",
+      "repository": {
+        "url": "https://github.com/Natsubrei/dsh-mermaid"
+      },
+      "metadata": {
+        "keywords": [
+          "deepseek-harness",
+          "dsh",
+          "dsh-plugin",
+          "dsh-bundle",
+          "mermaid",
+          "diagram",
+          "sidebar"
+        ]
+      },
+      "dist-tags": {
+        "latest": "0.1.0"
+      },
+      "versions": [
+        {
+          "version": "0.1.0",
+          "publishTimestamp": 1792563676,
+          "source": {
+            "type": "git",
+            "url": "https://github.com/Natsubrei/dsh-mermaid",
+            "commit": "05758d3a0574d1084831993bb4be0bdab34a552d"
+          },
+          "engines": {
+            "dsh": "*"
+          }
+        }
+      ]
+    }
+  ]
+}
