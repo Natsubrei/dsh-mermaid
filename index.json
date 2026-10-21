@@ -37,16 +37,16 @@
         ]
       },
       "dist-tags": {
-        "latest": "0.1.1"
+        "latest": "0.1.2"
       },
       "versions": [
         {
-          "version": "0.1.1",
-          "publishTimestamp": 1792573330,
+          "version": "0.1.2",
+          "publishTimestamp": 1792573456,
           "source": {
             "type": "git",
             "url": "https://github.com/Natsubrei/dsh-mermaid",
-            "commit": "ecd99cd17c95f1885a8587c5a3b093dd255a7c2f"
+            "commit": "b2d8621ce80b847087f15f77862356141c20460c"
           },
           "engines": {
             "dsh": "*"
