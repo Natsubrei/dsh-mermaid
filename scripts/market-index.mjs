@@ -22,6 +22,13 @@ const DESCRIPTION = {
 
 const root = new URL('..', import.meta.url)
 const pkg = JSON.parse(await readFile(new URL('package.json', root), 'utf8'))
+const client = await readFile(new URL('client.js', root), 'utf8')
+const clientId = client.match(/^window\.__ModuleLoader__\.load\(\{\n  id: "([^"]+)"/m)?.[1]
+if (clientId !== pkg.name) {
+  throw new Error(
+    `client.js registers ${JSON.stringify(clientId)} but package.json name is ${JSON.stringify(pkg.name)}; run node build.mjs first`,
+  )
+}
 
 const commit = process.env.MARKET_COMMIT
   ?? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim()

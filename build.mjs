@@ -10,7 +10,10 @@ import { build } from 'esbuild'
 
 const root = new URL('.', import.meta.url)
 const require = createRequire(import.meta.url)
-const PKG = '@local/dsh-mermaid'
+const PKG = JSON.parse(await readFile(new URL('package.json', root), 'utf8')).name
+if (typeof PKG !== 'string' || PKG === '') {
+  throw new Error('build: package.json is missing a name')
+}
 
 const result = await build({
   entryPoints: [fileURLToPath(new URL('src/client.jsx', root))],

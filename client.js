@@ -1,5 +1,5 @@
 window.__ModuleLoader__.load({
-  id: "@local/dsh-mermaid",
+  id: "dsh-mermaid",
   factory(require) {
     const module = { exports: {} };
     (function (module, exports, require) {
