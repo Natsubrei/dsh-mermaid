@@ -20,7 +20,7 @@
 import { useCallback, useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 
-const TAB_ID = '@local/dsh-mermaid/mermaid'
+const TAB_ID = 'dsh-mermaid/mermaid'
 const TAB_KIND = 'mermaid'
 const NS = 'mermaid'
 

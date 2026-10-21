@@ -1,6 +1,6 @@
 {
   "name": "dsh-mermaid",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "description": "Mermaid diagrams in the DeepSeek Harness right sidebar: renders a conversation's diagrams with in-card zoom and pan.",
   "keywords": [
