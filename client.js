@@ -86,6 +86,7 @@ var CSS = `
   min-height: 0;
   padding: 12px 14px 20px;
   overflow: auto;
+  overscroll-behavior: contain;
   color: var(--dsw-alias-label-primary);
   background: var(--dsw-alias-bg-base);
   font: var(--dsw-font-markdown-base);
@@ -105,6 +106,10 @@ var CSS = `
   border-radius: var(--dsw-radius-lg);
   background: var(--dsw-alias-markdown-code-block);
   overflow: hidden;
+  /* Cards are flex items of a scrolling column: without this they shrink to
+     share the pane's height, clipping each diagram and leaving the pane with
+     nothing to scroll. */
+  flex: none;
 }
 .dsh-mermaid-card-head {
   display: flex;
@@ -139,42 +144,24 @@ var CSS = `
   outline-offset: 1px;
 }
 .dsh-mermaid-body { padding: 2px 12px 14px; }
-.dsh-mermaid-viewport {
-  position: relative;
-  overflow: hidden;
+/* The card shows the diagram fitted and whole; zooming and panning belong to
+   the full-screen viewer, one click away. */
+.dsh-mermaid-static {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
   border-radius: var(--dsw-radius-sm);
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
+  background: none;
+  color: inherit;
+  cursor: zoom-in;
+  text-align: left;
 }
-.dsh-mermaid-viewport[data-zoomed] { cursor: grab; }
-.dsh-mermaid-viewport[data-dragging] { cursor: grabbing; }
-.dsh-mermaid-canvas { transform-origin: 0 0; will-change: transform; }
-.dsh-mermaid-canvas svg { display: block; max-width: 100%; height: auto; }
-.dsh-mermaid-canvas text { user-select: none; -webkit-user-select: none; }
-.dsh-mermaid-zoom {
-  position: absolute;
-  right: 6px;
-  bottom: 6px;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px;
-  border-radius: var(--dsw-radius-sm);
-  background: var(--dsw-alias-bg-base);
-  box-shadow: var(--dsw-shadow-lv1);
-  opacity: 0;
-  transition: opacity 0.12s ease;
-}
-.dsh-mermaid-viewport:hover .dsh-mermaid-zoom,
-.dsh-mermaid-viewport:focus-within .dsh-mermaid-zoom,
-.dsh-mermaid-viewport[data-zoomed] .dsh-mermaid-zoom { opacity: 1; }
-.dsh-mermaid-zoom-pct {
-  min-width: 34px;
-  color: var(--dsw-alias-label-tertiary);
-  font: 11px/18px var(--dsw-font-family);
-  font-variant-numeric: tabular-nums;
-  text-align: center;
+.dsh-mermaid-static svg { display: block; max-width: 100%; height: auto; }
+.dsh-mermaid-static text { user-select: none; -webkit-user-select: none; }
+.dsh-mermaid-static:focus-visible {
+  outline: 1px solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
 }
 .dsh-mermaid-note {
   margin: 0 0 10px;
@@ -352,12 +339,6 @@ function zoomAround(view, factor, x, y, min, max) {
   const ratio = scale / view.scale;
   return { scale, x: x - (x - view.x) * ratio, y: y - (y - view.y) * ratio };
 }
-function clampToContent(view, width, height) {
-  if (width <= 0 || height <= 0) return view;
-  const maxX = Math.max(0, width * (view.scale - 1));
-  const maxY = Math.max(0, height * (view.scale - 1));
-  return { scale: view.scale, x: Math.min(0, Math.max(-maxX, view.x)), y: Math.min(0, Math.max(-maxY, view.y)) };
-}
 function useWheelZoom(ref, onZoom) {
   (0, import_react.useEffect)(() => {
     const element = ref.current;
@@ -530,75 +511,16 @@ function DiagramViewer({ svg, t, onClose }) {
     document.body
   );
 }
-var INLINE_MAX_SCALE = 8;
-function DiagramPreview({ svg, t }) {
-  const viewportRef = (0, import_react.useRef)(null);
-  const canvasRef = (0, import_react.useRef)(null);
-  const [view, setView] = (0, import_react.useState)({ scale: 1, x: 0, y: 0 });
-  const measure = (0, import_react.useCallback)(() => {
-    const canvas = canvasRef.current;
-    return canvas === null ? { width: 0, height: 0 } : { width: canvas.offsetWidth, height: canvas.offsetHeight };
-  }, []);
-  const zoomAt = (0, import_react.useCallback)((factor, x, y) => {
-    setView((current) => {
-      const next = zoomAround(current, factor, x, y, 1, INLINE_MAX_SCALE);
-      const { width, height } = measure();
-      return clampToContent(next, width, height);
-    });
-  }, [measure]);
-  const reset = (0, import_react.useCallback)(() => {
-    setView({ scale: 1, x: 0, y: 0 });
-  }, []);
-  const zoomFromCenter = (0, import_react.useCallback)((factor) => {
-    const viewport = viewportRef.current;
-    if (viewport === null) return;
-    zoomAt(factor, viewport.clientWidth / 2, viewport.clientHeight / 2);
-  }, [zoomAt]);
-  useWheelZoom(viewportRef, zoomAt);
-  const { dragging, handlers } = useDragPan((dx, dy) => {
-    setView((current) => {
-      const { width, height } = measure();
-      return clampToContent({ scale: current.scale, x: current.x + dx, y: current.y + dy }, width, height);
-    });
-  });
-  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(
-    "div",
+function DiagramPreview({ svg, t, onOpen }) {
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
+    "button",
     {
-      className: "dsh-mermaid-viewport",
-      ref: viewportRef,
-      "data-zoomed": view.scale > 1 ? "" : void 0,
-      "data-dragging": dragging ? "" : void 0,
-      onDoubleClick: reset,
-      ...handlers,
-      onPointerCancel: handlers.onPointerUp,
-      children: [
-        /* @__PURE__ */ (0, import_jsx_runtime.jsx)(
-          "div",
-          {
-            className: "dsh-mermaid-canvas",
-            ref: canvasRef,
-            style: { transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})` },
-            dangerouslySetInnerHTML: { __html: svg }
-          }
-        ),
-        /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { className: "dsh-mermaid-zoom", onPointerDown: (event) => {
-          event.stopPropagation();
-        }, onDoubleClick: (event) => {
-          event.stopPropagation();
-        }, children: [
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", className: "dsh-mermaid-button", title: t("zoomOut"), "aria-label": t("zoomOut"), onClick: () => {
-            zoomFromCenter(0.8);
-          }, children: "\u2212" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { className: "dsh-mermaid-zoom-pct", children: [
-            Math.round(view.scale * 100),
-            "%"
-          ] }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", className: "dsh-mermaid-button", title: t("zoomIn"), "aria-label": t("zoomIn"), onClick: () => {
-            zoomFromCenter(1.25);
-          }, children: "+" }),
-          /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", className: "dsh-mermaid-button", onClick: reset, children: t("fit") })
-        ] })
-      ]
+      type: "button",
+      className: "dsh-mermaid-static",
+      title: t("zoom"),
+      "aria-label": t("zoom"),
+      onClick: onOpen,
+      dangerouslySetInnerHTML: { __html: svg }
     }
   );
 }
@@ -652,7 +574,9 @@ function DiagramCard({ source, loadMermaid, t }) {
         /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", { type: "button", className: "dsh-mermaid-button", onClick: onCopy, children: copied ? t("copied") : t("copy") })
       ] })
     ] }),
-    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "dsh-mermaid-body", children: showDiagram ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DiagramPreview, { svg: drawn.svg, t }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
+    /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", { className: "dsh-mermaid-body", children: showDiagram ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DiagramPreview, { svg: drawn.svg, t, onOpen: () => {
+      setExpanded(true);
+    } }) : /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
       failed && /* @__PURE__ */ (0, import_jsx_runtime.jsx)("p", { className: "dsh-mermaid-note", children: t("failed") }),
       /* @__PURE__ */ (0, import_jsx_runtime.jsx)("pre", { className: "dsh-mermaid-source", children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: text }) })
     ] }) }),

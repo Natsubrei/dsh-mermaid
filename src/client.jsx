@@ -81,6 +81,7 @@ const CSS = `
   min-height: 0;
   padding: 12px 14px 20px;
   overflow: auto;
+  overscroll-behavior: contain;
   color: var(--dsw-alias-label-primary);
   background: var(--dsw-alias-bg-base);
   font: var(--dsw-font-markdown-base);
@@ -100,6 +101,10 @@ const CSS = `
   border-radius: var(--dsw-radius-lg);
   background: var(--dsw-alias-markdown-code-block);
   overflow: hidden;
+  /* Cards are flex items of a scrolling column: without this they shrink to
+     share the pane's height, clipping each diagram and leaving the pane with
+     nothing to scroll. */
+  flex: none;
 }
 .dsh-mermaid-card-head {
   display: flex;
@@ -134,42 +139,24 @@ const CSS = `
   outline-offset: 1px;
 }
 .dsh-mermaid-body { padding: 2px 12px 14px; }
-.dsh-mermaid-viewport {
-  position: relative;
-  overflow: hidden;
+/* The card shows the diagram fitted and whole; zooming and panning belong to
+   the full-screen viewer, one click away. */
+.dsh-mermaid-static {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
   border-radius: var(--dsw-radius-sm);
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
+  background: none;
+  color: inherit;
+  cursor: zoom-in;
+  text-align: left;
 }
-.dsh-mermaid-viewport[data-zoomed] { cursor: grab; }
-.dsh-mermaid-viewport[data-dragging] { cursor: grabbing; }
-.dsh-mermaid-canvas { transform-origin: 0 0; will-change: transform; }
-.dsh-mermaid-canvas svg { display: block; max-width: 100%; height: auto; }
-.dsh-mermaid-canvas text { user-select: none; -webkit-user-select: none; }
-.dsh-mermaid-zoom {
-  position: absolute;
-  right: 6px;
-  bottom: 6px;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px;
-  border-radius: var(--dsw-radius-sm);
-  background: var(--dsw-alias-bg-base);
-  box-shadow: var(--dsw-shadow-lv1);
-  opacity: 0;
-  transition: opacity 0.12s ease;
-}
-.dsh-mermaid-viewport:hover .dsh-mermaid-zoom,
-.dsh-mermaid-viewport:focus-within .dsh-mermaid-zoom,
-.dsh-mermaid-viewport[data-zoomed] .dsh-mermaid-zoom { opacity: 1; }
-.dsh-mermaid-zoom-pct {
-  min-width: 34px;
-  color: var(--dsw-alias-label-tertiary);
-  font: 11px/18px var(--dsw-font-family);
-  font-variant-numeric: tabular-nums;
-  text-align: center;
+.dsh-mermaid-static svg { display: block; max-width: 100%; height: auto; }
+.dsh-mermaid-static text { user-select: none; -webkit-user-select: none; }
+.dsh-mermaid-static:focus-visible {
+  outline: 1px solid var(--dsw-focus-ring-color, var(--dsw-alias-state-business-primary));
+  outline-offset: 2px;
 }
 .dsh-mermaid-note {
   margin: 0 0 10px;
@@ -420,22 +407,6 @@ function zoomAround(view, factor, x, y, min, max) {
 }
 
 /**
- * Keep zoomed content inside its viewport. `width` and `height` are the
- * content's unscaled size, which for a fitted preview equals the viewport's, so
- * at scale 1 the offset collapses to zero and the diagram sits still.
- * @param view - the current scale and offset.
- * @param width - the content's unscaled width.
- * @param height - the content's unscaled height.
- * @returns the view with its offset pulled inside the bounds.
- */
-function clampToContent(view, width, height) {
-  if (width <= 0 || height <= 0) return view
-  const maxX = Math.max(0, width * (view.scale - 1))
-  const maxY = Math.max(0, height * (view.scale - 1))
-  return { scale: view.scale, x: Math.min(0, Math.max(-maxX, view.x)), y: Math.min(0, Math.max(-maxY, view.y)) }
-}
-
-/**
  * Wheel zoom over one element. The listener is registered by hand because
  * React attaches wheel handlers as passive, where `preventDefault` does
  * nothing and the page would scroll behind the zoom.
@@ -635,74 +606,24 @@ function DiagramViewer({ svg, t, onClose }) {
   )
 }
 
-const INLINE_MAX_SCALE = 8
-
 /**
- * The card's own view of one diagram: the wheel zooms around the pointer and
- * dragging pans, bounded so the diagram cannot be dragged out of its frame.
- * The scale starts at the fitted size, which is the card's ordinary rendering,
- * so the preview only changes when the reader asks it to.
- * @param props - the rendered SVG markup and localized copy.
- * @returns the preview viewport.
+ * The card's view of one diagram: fitted to the card, whole and static. Zoom
+ * and pan live in the full-screen viewer instead — a preview that swallowed
+ * the wheel fought the page it sits in, and a fitted diagram has nothing to
+ * pan to until the reader asks for more room.
+ * @param props - the rendered SVG markup, localized copy, and the open handler.
+ * @returns the diagram, as a button that enlarges it.
  */
-function DiagramPreview({ svg, t }) {
-  const viewportRef = useRef(null)
-  const canvasRef = useRef(null)
-  const [view, setView] = useState({ scale: 1, x: 0, y: 0 })
-
-  const measure = useCallback(() => {
-    const canvas = canvasRef.current
-    return canvas === null ? { width: 0, height: 0 } : { width: canvas.offsetWidth, height: canvas.offsetHeight }
-  }, [])
-
-  const zoomAt = useCallback((factor, x, y) => {
-    setView((current) => {
-      const next = zoomAround(current, factor, x, y, 1, INLINE_MAX_SCALE)
-      const { width, height } = measure()
-      return clampToContent(next, width, height)
-    })
-  }, [measure])
-
-  const reset = useCallback(() => { setView({ scale: 1, x: 0, y: 0 }) }, [])
-
-  const zoomFromCenter = useCallback((factor) => {
-    const viewport = viewportRef.current
-    if (viewport === null) return
-    zoomAt(factor, viewport.clientWidth / 2, viewport.clientHeight / 2)
-  }, [zoomAt])
-
-  useWheelZoom(viewportRef, zoomAt)
-
-  const { dragging, handlers } = useDragPan((dx, dy) => {
-    setView((current) => {
-      const { width, height } = measure()
-      return clampToContent({ scale: current.scale, x: current.x + dx, y: current.y + dy }, width, height)
-    })
-  })
-
+function DiagramPreview({ svg, t, onOpen }) {
   return (
-    <div
-      className="dsh-mermaid-viewport"
-      ref={viewportRef}
-      data-zoomed={view.scale > 1 ? '' : undefined}
-      data-dragging={dragging ? '' : undefined}
-      onDoubleClick={reset}
-      {...handlers}
-      onPointerCancel={handlers.onPointerUp}
-    >
-      <div
-        className="dsh-mermaid-canvas"
-        ref={canvasRef}
-        style={{ transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})` }}
-        dangerouslySetInnerHTML={{ __html: svg }}
-      />
-      <div className="dsh-mermaid-zoom" onPointerDown={(event) => { event.stopPropagation() }} onDoubleClick={(event) => { event.stopPropagation() }}>
-        <button type="button" className="dsh-mermaid-button" title={t('zoomOut')} aria-label={t('zoomOut')} onClick={() => { zoomFromCenter(0.8) }}>−</button>
-        <span className="dsh-mermaid-zoom-pct">{Math.round(view.scale * 100)}%</span>
-        <button type="button" className="dsh-mermaid-button" title={t('zoomIn')} aria-label={t('zoomIn')} onClick={() => { zoomFromCenter(1.25) }}>+</button>
-        <button type="button" className="dsh-mermaid-button" onClick={reset}>{t('fit')}</button>
-      </div>
-    </div>
+    <button
+      type="button"
+      className="dsh-mermaid-static"
+      title={t('zoom')}
+      aria-label={t('zoom')}
+      onClick={onOpen}
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
   )
 }
 
@@ -772,7 +693,7 @@ function DiagramCard({ source, loadMermaid, t }) {
       </div>
       <div className="dsh-mermaid-body">
         {showDiagram
-          ? <DiagramPreview svg={drawn.svg} t={t} />
+          ? <DiagramPreview svg={drawn.svg} t={t} onOpen={() => { setExpanded(true) }} />
           : (
             <>
               {failed && <p className="dsh-mermaid-note">{t('failed')}</p>}
