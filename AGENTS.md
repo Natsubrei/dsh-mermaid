@@ -73,6 +73,13 @@ index all have to describe the same code.
    unversioned and let `latest` move.
 4. `npm run market` on the tagged commit, then commit `index.json` on its own
    (`Publish the 0.2.0 market index`) and push.
+5. `npm publish` (the account needs an OTP or a token that bypasses 2FA). The
+   registry copy is what a reader behind a slow GitHub connection installs from,
+   and `probe-npm.mjs` in awesome-dsh-plugin upgrades the list card to a registry
+   install by itself once the package exists and its `repository` points back
+   here — no entry change, no pull request. `dist-tags.latest` must end up on the
+   tagged version: a publish that fails after the tag is retried as a publish,
+   never as a new tag.
 
 `index.json` pins the commit that carries the built artifacts — the tagged one,
 not the index commit. Never hand-edit it: the commit, the timestamp, and
@@ -81,6 +88,8 @@ the case where the index has to be generated before the commit does.
 
 ## Distribution
 
+- npm: `dsh-mermaid-panel` — `install_bundle dsh-mermaid-panel@0.1.4` takes the
+  same tarball from the registry.
 - This repository's own index:
   `https://raw.githubusercontent.com/Natsubrei/dsh-mermaid-panel/main/index.json`
 - The awesome-dsh-plugin entry lives in that repository as
