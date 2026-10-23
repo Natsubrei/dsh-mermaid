@@ -111,6 +111,11 @@ the case where the index has to be generated before the commit does.
   changes, the page shows its empty state until the selectors in
   `src/client.jsx` are updated. That is the first thing to check when "no
   diagrams" is reported, before any plugin code.
+- The first publish of a name answers `PUT 202` and prints "being processed".
+  For a minute or two the registry serves only npm's `0.0.0-stage` placeholder,
+  so `npm view <name> version` can answer `0.0.0-stage` right after a publish
+  that worked. Read `dist-tags` — `latest` is the answer — or re-check
+  `https://registry.npmjs.org/<name>/<version>` before concluding it failed.
 - Mermaid's engine is a classic script. `build.mjs` deliberately does not wrap
   it in the module factory, because doing so drops the global it installs.
 - Do not create a repository at the old name `Natsubrei/dsh-mermaid`: GitHub's
