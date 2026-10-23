@@ -1,6 +1,6 @@
 {
-  "name": "dsh-mermaid",
-  "version": "0.1.3",
+  "name": "dsh-mermaid-panel",
+  "version": "0.1.4",
   "type": "module",
   "description": "Mermaid diagrams in the DeepSeek Harness right sidebar: renders a conversation's diagrams with in-card zoom and pan.",
   "keywords": [
@@ -16,11 +16,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Natsubrei/dsh-mermaid.git"
+    "url": "git+https://github.com/Natsubrei/dsh-mermaid-panel.git"
   },
-  "homepage": "https://github.com/Natsubrei/dsh-mermaid#readme",
+  "homepage": "https://github.com/Natsubrei/dsh-mermaid-panel#readme",
   "bugs": {
-    "url": "https://github.com/Natsubrei/dsh-mermaid/issues"
+    "url": "https://github.com/Natsubrei/dsh-mermaid-panel/issues"
   },
   "engines": {
     "dsh": "*"

@@ -13,7 +13,7 @@
 import { execFileSync } from 'node:child_process'
 import { readFile, writeFile } from 'node:fs/promises'
 
-const REPOSITORY = 'https://github.com/Natsubrei/dsh-mermaid'
+const REPOSITORY = 'https://github.com/Natsubrei/dsh-mermaid-panel'
 const TITLE = { en: 'Mermaid diagrams', zh: 'Mermaid 图表' }
 const DESCRIPTION = {
   en: 'A right-Sidebar page that renders a conversation\u2019s Mermaid diagrams, with zoom and pan in every card.',

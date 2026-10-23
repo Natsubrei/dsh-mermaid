@@ -1,6 +1,11 @@
-# dsh-mermaid
+# dsh-mermaid-panel
 
 A DeepSeek Harness client plugin that adds a **Mermaid** page to the right Sidebar. It renders the Mermaid diagrams in the conversation you are reading, without touching the conversation itself.
+
+> Published as `dsh-mermaid-panel`, not `dsh-mermaid`: that package name belongs to
+> [MrmoLabs/dsh-mermaid](https://github.com/MrmoLabs/dsh-mermaid), which renders
+> diagrams inline in the chat instead. The two do different things and can now be
+> installed side by side.
 
 ## What it does
 
@@ -46,7 +51,7 @@ Both views are portals or plain transforms inside the page: the full-screen one 
 The repository publishes a format 1 market index at
 
 ```
-https://raw.githubusercontent.com/Natsubrei/dsh-mermaid/main/index.json
+https://raw.githubusercontent.com/Natsubrei/dsh-mermaid-panel/main/index.json
 ```
 
 Add it in **Plugins → Discover → Add index**, then install **Mermaid diagrams** from the list. Discover ships off by default: switch on **Custom plugin markets** under the Plugins page's experimental list first. The index entry pins a commit, so installation is reproducible and needs neither npm nor a token — DSH runs `git` against this repository.

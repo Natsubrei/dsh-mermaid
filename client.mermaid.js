@@ -3637,7 +3637,7 @@ globalThis["mermaid"] = globalThis.__esbuild_esm_mermaid_nm["mermaid"].default;
 
 
 window.__ModuleLoader__.load({
-  id: "dsh-mermaid/client.mermaid.js",
+  id: "dsh-mermaid-panel/client.mermaid.js",
   factory() {
     return { default: globalThis.mermaid };
   },
